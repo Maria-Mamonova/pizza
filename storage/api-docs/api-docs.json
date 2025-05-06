@@ -1,0 +1,982 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Pizza Delivery API",
+        "description": "Документация REST API для проекта доставки пиццы. Здесь описаны доступные эндпоинты, форматы данных, авторизация и многое другое.",
+        "contact": {
+            "name": "Техподдержка Pizza Delivery",
+            "email": "support@pizzadelivery.local"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1",
+            "description": "Основной сервер (localhost)"
+        }
+    ],
+    "paths": {
+        "/api/admin/orders": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Получить все заказы (админ)",
+                "description": "Получить список всех заказов (только для админа).",
+                "operationId": "e26a39828147361cb41850de423cdb6d",
+                "responses": {
+                    "200": {
+                        "description": "Список всех заказов"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/orders/{order}/status": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Обновить статус заказа (админ)",
+                "description": "Обновить статус заказа (только для админа).",
+                "operationId": "9e73cd42f0eca319be7b1d58a519111b",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "description": "ID заказа",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "new",
+                                            "preparing",
+                                            "on_the_way",
+                                            "delivered"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Статус обновлён"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации"
+                    },
+                    "403": {
+                        "description": "Нет доступа"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Регистрация нового пользователя",
+                "operationId": "8a56853624e025573120a09a4c75d468",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Анна Петрова"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "anna@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+79991234567"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Успешная регистрация",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User registered successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Авторизация пользователя",
+                "operationId": "a3b306d14572d1f4bd6c064b3233e7b8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    },
+                                    "session-token": {
+                                        "type": "string",
+                                        "example": "abc123xyz"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Токен авторизации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "token": {
+                                            "type": "string",
+                                            "example": "1|XoG...token..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Неверные учетные данные"
+                    }
+                }
+            }
+        },
+        "/api/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Получить текущего пользователя",
+                "operationId": "9d9bc556f927575aa492a88c28fe5908",
+                "responses": {
+                    "200": {
+                        "description": "Текущий пользователь",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Выход из системы (удаляет все токены)",
+                "operationId": "fe8f3429cd6979b3b4517e186505f9f9",
+                "responses": {
+                    "200": {
+                        "description": "Выход выполнен успешно"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/cart": {
+            "get": {
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Получить корзину",
+                "description": "Получить содержимое корзины пользователя или гостя",
+                "operationId": "0652f94dde92e36bbb3c461356ce1d7b",
+                "responses": {
+                    "200": {
+                        "description": "Список товаров в корзине",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CartItem"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Добавить или обновить товар",
+                "description": "Добавить или обновить товар в корзине",
+                "operationId": "b97b9d8c445f7c68b94c854e81910ed6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_id",
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "product_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Товар добавлен или обновлён",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Item added or updated"
+                                        },
+                                        "item": {
+                                            "$ref": "#/components/schemas/CartItem"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/cart/{item}": {
+            "delete": {
+                "tags": [
+                    "Cart"
+                ],
+                "summary": "Удалить товар из корзины",
+                "description": "Удалить товар из корзины",
+                "operationId": "e23751bba3c75ac781b08db7e7412dcd",
+                "parameters": [
+                    {
+                        "name": "item",
+                        "in": "path",
+                        "description": "ID элемента корзины",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Товар удалён",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Item removed"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Нельзя удалить чужой товар"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/orders": {
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Получить заказы текущего пользователя",
+                "description": "Получить все заказы текущего пользователя.",
+                "operationId": "2cd7e03021e72d9d799c12dfe179c865",
+                "responses": {
+                    "200": {
+                        "description": "Список заказов"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Оформить заказ",
+                "description": "Создать новый заказ из корзины.",
+                "operationId": "d690d6834318e9b064df441e854de8b9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "address",
+                                    "phone",
+                                    "delivery_time"
+                                ],
+                                "properties": {
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "delivery_time": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Заказ оформлен"
+                    },
+                    "400": {
+                        "description": "Корзина пуста"
+                    },
+                    "500": {
+                        "description": "Ошибка сервера"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/orders/{order}": {
+            "get": {
+                "tags": [
+                    "Orders"
+                ],
+                "summary": "Получить заказ по ID",
+                "description": "Получить конкретный заказ пользователя.",
+                "operationId": "f090f23952a43521af6f1d133826bc37",
+                "parameters": [
+                    {
+                        "name": "order",
+                        "in": "path",
+                        "description": "ID заказа",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Информация о заказе"
+                    },
+                    "403": {
+                        "description": "Нет доступа"
+                    },
+                    "404": {
+                        "description": "Заказ не найден"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/products": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Получить список продуктов",
+                "description": "Получить список всех продуктов.",
+                "operationId": "1bfaa78d1c2c3848ab8165c5dadcad3e",
+                "responses": {
+                    "200": {
+                        "description": "Список продуктов"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Создать продукт",
+                "description": "Создать новый продукт.",
+                "operationId": "e8185e307706e2cd84bbcf5171e2f09d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Продукт создан"
+                    },
+                    "422": {
+                        "description": "Ошибка валидации"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/products/{product}": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Получить продукт по ID",
+                "description": "Получить один продукт по ID.",
+                "operationId": "05f6ffcb49f47b4f4fc1a1c21ed60011",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID продукта",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Продукт найден"
+                    },
+                    "404": {
+                        "description": "Продукт не найден"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Обновить продукт",
+                "description": "Обновить продукт.",
+                "operationId": "c474d1318e5b8c3de1f4d52b6053111f",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID продукта",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Продукт обновлён"
+                    },
+                    "404": {
+                        "description": "Продукт не найден"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Удалить продукт",
+                "description": "Удалить продукт.",
+                "operationId": "1a0a353d0842ff4f9347bb66ec53e3ea",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "ID продукта",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Продукт удалён"
+                    },
+                    "404": {
+                        "description": "Продукт не найден"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "LoginRequest": {
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "user@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "password123"
+                    },
+                    "session-token": {
+                        "type": "string",
+                        "example": "abc123sessiontoken",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RegisterRequest": {
+                "required": [
+                    "name",
+                    "email",
+                    "password"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Иван Петров"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "ivan@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "MySecretPass123"
+                    },
+                    "password_confirmation": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "MySecretPass123"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+79001234567",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Cart": {
+                "required": [
+                    "id",
+                    "user_id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "session_token": {
+                        "type": "string",
+                        "example": "abc123xyz"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "CartItem": {
+                "required": [
+                    "id",
+                    "cart_id",
+                    "product_id",
+                    "quantity"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "cart_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "product_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 2
+                    }
+                },
+                "type": "object"
+            },
+            "Order": {
+                "required": [
+                    "id",
+                    "user_id",
+                    "address",
+                    "phone",
+                    "status"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "ул. Примерная, 123"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+79991234567"
+                    },
+                    "delivery_time": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-04-25T18:00:00Z"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    }
+                },
+                "type": "object"
+            },
+            "OrderItem": {
+                "required": [
+                    "id",
+                    "order_id",
+                    "product_id",
+                    "quantity",
+                    "price"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "order_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "product_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 199.99
+                    }
+                },
+                "type": "object"
+            },
+            "Product": {
+                "title": "Product",
+                "required": [
+                    "id",
+                    "name",
+                    "price"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Пицца Маргарита"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "pizza"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 599.99
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "title": "User",
+                "required": [
+                    "id",
+                    "name",
+                    "email"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Иван Иванов"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "ivan@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+79991234567"
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "user"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-04-10T12:34:56Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-04-10T12:34:56Z"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Enter token in format (Bearer <token>)",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Admin",
+            "description": "Admin"
+        },
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "Cart",
+            "description": "Cart"
+        },
+        {
+            "name": "Orders",
+            "description": "Orders"
+        },
+        {
+            "name": "Products",
+            "description": "Products"
+        }
+    ],
+    "security": [
+        {
+            "sanctum": []
+        }
+    ]
+}
