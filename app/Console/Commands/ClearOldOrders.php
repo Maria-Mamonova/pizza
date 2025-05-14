@@ -3,37 +3,48 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\Order;
+use App\Models\Cart;
 use Carbon\Carbon;
 
 class ClearOldOrders extends Command
 {
     /**
-     * The name and signature of the console command.
+     * Название и сигнатура консольной команды.
      *
      * @var string
      */
-    protected $signature = 'app:clear-old-orders';
+    protected $signature = 'app:clear-old-carts';
 
     /**
-     * The console command description.
+     * Описание консольной команды.
      *
      * @var string
      */
-    protected $description = 'Удалить заказы в статусе new, созданные более 24 часов назад';
+    protected $description = 'Удалить корзины (с товарами), созданные более 24 часов назад';
 
     /**
-     * Execute the console command.
+     * Выполнение команды.
      */
     public function handle(): int
     {
-        \Log::info('Запуск планировщика через cron!');
+        \Log::info('Запуск очистки старых корзин');
 
-        $count = Order::where('status', 'new')
-            ->where('created_at', '<', Carbon::now()->subDay())
-            ->delete();
+        $threshold = Carbon::now()->subDay();
 
-        $this->info("Удалено заказов: {$count}");
+        // Найти и удалить старые корзины с товарами
+        $carts = Cart::where('created_at', '<', $threshold)
+            ->whereHas('items') // корзина не пустая
+            ->get();
+
+        $count = 0;
+
+        foreach ($carts as $cart) {
+            $cart->items()->delete();
+            $cart->delete();
+            $count++;
+        }
+
+        $this->info("Удалено корзин: {$count}");
 
         return Command::SUCCESS;
     }

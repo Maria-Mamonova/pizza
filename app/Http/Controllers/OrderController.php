@@ -83,7 +83,7 @@ class OrderController extends Controller
      */
     public function store(OrderCreateRequest $request)
     {
-        $user = $request->user();
+        $user = $request->user(); // Гарантированно авторизован (по middleware)
         $sessionToken = $request->header('X-Session-Token');
 
         $cart = Cart::query()
@@ -94,7 +94,12 @@ class OrderController extends Controller
             ->with('items.product')
             ->first();
 
-        // Привяжем корзину к пользователю, если он авторизован
+        // Добавлена: проверка, пуста ли корзина
+        if (!$cart || $cart->items->isEmpty()) {
+            return response()->json(['message' => 'Cart is empty'], 400);
+        }
+
+        // Привязка корзины к пользователю, если ещё не привязана
         if ($user && $cart->user_id === null) {
             $cart->update([
                 'user_id' => $user->id,
@@ -106,7 +111,7 @@ class OrderController extends Controller
 
         try {
             $order = Order::create([
-                'user_id' => $user?->id,
+                'user_id' => $user->id,
                 'address' => $request->address,
                 'phone' => $request->phone,
                 'delivery_time' => $request->delivery_time,

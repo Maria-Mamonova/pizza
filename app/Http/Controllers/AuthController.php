@@ -96,25 +96,32 @@ class AuthController extends Controller
         // 💡 Логика слияния корзины
         if ($request->has('session-token')) {
             $guestCart = \App\Models\Cart::where('session_token', $request->get('session-token'))->first();
-            if ($guestCart && !$guestCart->user_id) {
-                $existingUserCart = \App\Models\Cart::where('user_id', $user->id)->first();
 
-                if ($existingUserCart) {
-                    // Переносим товары из гостевой корзины в корзину пользователя
-                    foreach ($guestCart->items as $item) {
-                        $existingUserCart->items()->updateOrCreate(
-                            ['product_id' => $item->product_id],
-                            ['quantity' => $item->quantity]
-                        );
+            if ($guestCart && !$guestCart->user_id) {
+                $existingUserCart = \App\Models\Cart::firstOrCreate(['user_id' => $user->id]);
+
+                foreach ($guestCart->items as $item) {
+                    $userItem = $existingUserCart->items()->where('product_id', $item->product_id)->first();
+
+                    if ($userItem) {
+                        $userItem->quantity += $item->quantity;
+                        $userItem->save();
+                    } else {
+                        $existingUserCart->items()->create([
+                            'product_id' => $item->product_id,
+                            'quantity' => $item->quantity,
+                        ]);
                     }
-                    $guestCart->delete(); // Удаляем гостевую корзину
-                } else {
-                    // Просто привязываем гостевую корзину к пользователю
-                    $guestCart->update([
-                        'user_id' => $user->id,
-                        'session_token' => null,
-                    ]);
                 }
+
+                // Удаляем гостевую корзину
+                $guestCart->delete();
+            } elseif ($guestCart && $guestCart->user_id === null) {
+                // Только если корзина не удалялась
+                $guestCart->update([
+                    'user_id' => $user->id,
+                    'session_token' => null,
+                ]);
             }
         }
 
@@ -123,7 +130,6 @@ class AuthController extends Controller
             'token' => $user->createToken('api-token')->plainTextToken,
         ]);
     }
-
 
     /**
      * @OA\Get(
