@@ -4,9 +4,28 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\Product;
-use App\Models\CartItem;
 
 
+/**
+ * @OA\Schema(
+ *     schema="CartUpdateRequest",
+ *     type="object",
+ *     required={"product_id", "quantity"},
+ *     @OA\Property(
+ *         property="product_id",
+ *         type="integer",
+ *         example=3,
+ *         description="ID продукта"
+ *     ),
+ *     @OA\Property(
+ *         property="quantity",
+ *         type="integer",
+ *         minimum=1,
+ *         example=2,
+ *         description="Количество"
+ *     )
+ * )
+ */
 class CartUpdateRequest extends FormRequest
 {
     /**

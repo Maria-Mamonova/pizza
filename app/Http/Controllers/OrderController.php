@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Http\Requests\OrderCreateRequest;
+use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\Cart;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -22,9 +25,10 @@ class OrderController extends Controller
      *     @OA\Response(response=200, description="Список заказов")
      * )
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        return $request->user()->orders()->with('items.product')->get();
+        $orders = $request->user()->orders()->with('items.product')->get();
+        return response()->json($orders);
     }
 
     /**
@@ -47,16 +51,43 @@ class OrderController extends Controller
      *     @OA\Response(response=404, description="Заказ не найден")
      * )
      */
-    public function show(Order $order)
+    public function show(Order $order): JsonResponse
     {
         $this->authorize('view', $order);
-        return $order->load('items.product');
+        return response()->json($order->load('items.product'));
     }
 
-    public function all()
+    /**
+     * Получить все заказы (только для админа) с пагинацией.
+     *
+     * @OA\Get(
+     *     path="/api/orders/all",
+     *     summary="Получить все заказы (пагинация, только для админов)",
+     *     tags={"Orders"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Количество элементов на страницу (по умолчанию 50, максимум 100)",
+     *         required=false,
+     *         @OA\Schema(type="integer", default=50, maximum=100)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Список заказов с пагинацией"
+     *     ),
+     *     @OA\Response(response=403, description="Нет доступа")
+     * )
+     */
+    public function all(Request $request): JsonResponse
     {
         $this->authorize('admin');
-        return Order::with('items.product')->get();
+
+        $perPage = (int) $request->get('per_page', 50);
+        $perPage = min($perPage, 100); // максимум 100
+
+        $orders = Order::with('items.product')->paginate($perPage);
+        return response()->json($orders);
     }
 
     /**
@@ -81,7 +112,7 @@ class OrderController extends Controller
      *     @OA\Response(response=500, description="Ошибка сервера")
      * )
      */
-    public function store(OrderCreateRequest $request)
+    public function store(OrderCreateRequest $request): JsonResponse
     {
         $user = $request->user(); // Гарантированно авторизован (по middleware)
         $sessionToken = $request->header('X-Session-Token');
@@ -107,9 +138,9 @@ class OrderController extends Controller
             ]);
         }
 
-        DB::beginTransaction();
-
         try {
+            DB::beginTransaction();
+
             $order = Order::create([
                 'user_id' => $user->id,
                 'address' => $request->address,
@@ -130,10 +161,27 @@ class OrderController extends Controller
             $cart->items()->delete();
             DB::commit();
 
-            return response()->json(['message' => 'Заказ оформлен', 'order' => $order], 201);
-        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Заказ оформлен',
+                'order' => $order
+            ], 201);
+
+        } catch (\Throwable $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Ошибка при оформлении заказа'], 500);
+
+            // Генерируем уникальный идентификатор ошибки
+            $errorId = Str::uuid()->toString();
+
+            // Логируем подробности
+            Log::error("Ошибка при оформлении заказа [{$errorId}]: {$e->getMessage()}", [
+                'exception' => $e,
+                'user_id' => optional($user)->id,
+                'cart_id' => optional($cart)->id,
+            ]);
+
+            return response()->json([
+                'error' => 'Произошла ошибка при оформлении заказа. Сообщите в поддержку: ' . $errorId,
+            ], 500);
         }
     }
 }

@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests\CartUpdateRequest;
 use App\Models\Cart;
 use App\Models\CartItem;
-use App\Models\Product;
+
 
 class CartController extends Controller
 {
@@ -25,7 +26,7 @@ class CartController extends Controller
      *     )
      * )
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $cart = $this->getOrCreateCart($request);
 
@@ -63,7 +64,7 @@ class CartController extends Controller
      *     )
      * )
      */
-    public function addOrUpdate(CartUpdateRequest $request)
+    public function addOrUpdate(CartUpdateRequest $request): JsonResponse
     {
         $cart = $this->getOrCreateCart($request);
 
@@ -103,7 +104,7 @@ class CartController extends Controller
      *     )
      * )
      */
-    public function destroy(Request $request, CartItem $item)
+    public function destroy(Request $request, CartItem $item): JsonResponse
     {
         $cart = $this->getOrCreateCart($request);
 
